@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useCartStore, Product } from '@/lib/store';
+import { useCartStore, Product } from '../lib/store';
 import Link from 'next/link';
 
 const mockProducts: Product[] = [
