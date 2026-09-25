@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../../lib/prisma';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         price_data: {
           currency: 'usd',
           product_data: { name: item.name },
-          unit_amount: Math.round(item.price), // Force integer to prevent Stripe errors
+          unit_amount: Math.round(item.price),
         },
         quantity: item.quantity,
       })),
