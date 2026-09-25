@@ -8,22 +8,17 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('? Step 1: Starting checkout...');
     const body = await req.json();
     const { items } = body;
-    console.log('? Step 2: Items received:', items);
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
     }
 
-    console.log('? Step 3: Connecting to DB...');
     await prisma.$connect();
 
     const totalAmount = items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
-    console.log('? Step 4: Total amount:', totalAmount);
     
-    console.log('? Step 5: Creating order in DB...');
     const order = await prisma.order.create({
       data: {
         totalAmount,
@@ -31,12 +26,12 @@ export async function POST(req: NextRequest) {
         items: JSON.stringify(items),
       }
     });
-    console.log('? Step 6: Order created:', order.id);
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    console.log('? Step 7: Base URL:', baseUrl);
+    // Automatically use Vercel's built-in URL
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000';
 
-    console.log('? Step 8: Creating Stripe session...');
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: items.map((item: any) => ({
@@ -54,7 +49,6 @@ export async function POST(req: NextRequest) {
         orderId: order.id,
       },
     });
-    console.log('? Step 9: Stripe session created:', session.id);
 
     await prisma.order.update({
       where: { id: order.id },
@@ -63,10 +57,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error: any) {
-    console.error('?? CHECKOUT CRASHED ??');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    
+    console.error('💥 CHECKOUT CRASHED 💥', error.message);
     return NextResponse.json({ 
       error: 'Checkout failed', 
       details: error.message 
