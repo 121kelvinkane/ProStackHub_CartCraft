@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { prisma } from '../../lib/prisma';
 
@@ -28,11 +27,8 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    // Dynamically get the correct URL from the request headers (100% reliable on Vercel)
-    const headersList = await headers();
-    const host = headersList.get('host');
-    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
-    const baseUrl = `${protocol}://${host}`;
+    // THE FOOLPROOF FIX: Next.js guarantees this is the correct https:// URL on Vercel
+    const baseUrl = req.nextUrl.origin;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -50,7 +46,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         orderId: order.id,
       },
-    });ss
+    });
 
     await prisma.order.update({
       where: { id: order.id },
